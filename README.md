@@ -11,4 +11,4 @@ and to have some fun with Rust!
 - [x] Fetches real Wordle puzzles
   - [x] Use arrow keys to play previous puzzles!
 - [x] Saves your progress
-- [ ] Stat tracking
+- [x] Stat tracking
