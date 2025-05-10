@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
 pub(crate) enum Color {
     #[default]
     Gray,
@@ -9,7 +9,7 @@ pub(crate) enum Color {
     Green,
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub(crate) struct Letter {
     pub(crate) char: char,
     pub(crate) color: Option<Color>,
@@ -24,7 +24,7 @@ impl Default for Letter {
     }
 }
 
-#[derive(Clone, Copy, Default, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
 pub(crate) struct Row {
     pub(crate) letters: [Letter; 5],
 }
@@ -61,7 +61,7 @@ impl Row {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct GameInfo {
     #[serde(rename = "days_since_launch")]
     pub(crate) number: u32,
@@ -82,7 +82,7 @@ impl GameInfo {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct Game {
     pub(crate) grid: [Row; 6],
     pub(crate) index: (usize, usize),

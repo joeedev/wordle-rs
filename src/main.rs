@@ -1,9 +1,12 @@
+mod manager;
+mod save;
 mod widget;
 mod wordle;
 
-use chrono::{DateTime, Days, Utc};
 use crossterm::event::{self, Event, KeyModifiers};
+use manager::GameManager;
 use ratatui::Frame;
+use save::SaveData;
 
 #[derive(Default, PartialEq)]
 enum RunningState {
@@ -22,23 +25,15 @@ enum Message {
 }
 
 struct Model {
-    date: DateTime<Utc>,
-    game: wordle::Game,
+    game: GameManager,
     running_state: RunningState,
 }
 
 impl Model {
-    fn new(info: wordle::GameInfo) -> Self {
+    async fn new() -> Self {
         Self {
-            date: Utc::now(),
-            game: info.into(),
+            game: GameManager::new().await.expect("game should be fetched"),
             running_state: RunningState::Running,
-        }
-    }
-
-    async fn update_game_info(&mut self) {
-        if let Ok(info) = wordle::GameInfo::at(self.date).await {
-            self.game = info.into();
         }
     }
 
@@ -54,36 +49,29 @@ impl Model {
                 self.game.submit();
             }
             Message::Next => {
-                let new_date = self.date + Days::new(1);
-                if new_date.date_naive() <= Utc::now().date_naive() {
-                    self.date = new_date;
-                    self.update_game_info().await;
-                }
+                self.game.next().await;
             }
             Message::Previous => {
-                let new_date = self.date - Days::new(1);
-                if new_date.date_naive() <= Utc::now().date_naive() {
-                    self.date = new_date;
-                    self.update_game_info().await;
-                }
+                self.game.previous().await;
             }
             Message::Quit => {
                 self.running_state = RunningState::Done;
             }
         }
+
+        self.game.save();
     }
 
     fn view(&self, frame: &mut Frame) {
-        frame.render_widget(&self.game, frame.area());
+        let game: &wordle::Game = &self.game;
+        frame.render_widget(game, frame.area());
     }
 }
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
-    let puzzle = wordle::GameInfo::today().await;
-
     let mut terminal = ratatui::init();
-    let mut model = Model::new(puzzle.unwrap());
+    let mut model = Model::new().await;
 
     while model.running_state == RunningState::Running {
         terminal

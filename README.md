@@ -10,5 +10,5 @@ and to have some fun with Rust!
 - [x] Responsive: works for different terminal sizes
 - [x] Fetches real Wordle puzzles
   - [x] Use arrow keys to play previous puzzles!
-- [ ] Saves your progress
+- [x] Saves your progress
 - [ ] Stat tracking

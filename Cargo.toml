@@ -7,6 +7,8 @@ edition = "2024"
 anyhow = "1.0.98"
 chrono = "0.4.41"
 crossterm = "0.29.0"
+directories = "6.0.0"
+postcard = { version = "1.1.1", features = ["use-std"] }
 ratatui = "0.29.0"
 reqwest = { version = "0.12.15", features = ["json"] }
 serde = { version = "1.0.219", features = ["derive"] }
