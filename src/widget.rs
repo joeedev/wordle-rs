@@ -1,13 +1,14 @@
-use std::borrow::Cow;
+use std::{array, borrow::Cow, collections::HashSet};
 
 use ratatui::{
-    layout::{Constraint, Flex, Layout},
+    layout::{Constraint, Direction, Flex, Layout},
     prelude::{self, Color, Rect},
-    style::Stylize,
-    widgets::{Block, Padding, Paragraph, Widget},
+    style::{Style, Stylize},
+    text::Line,
+    widgets::{Bar, BarChart, BarGroup, Block, Padding, Paragraph, Widget},
 };
 
-use crate::wordle;
+use crate::{stats::Stats, wordle};
 
 impl From<&wordle::Color> for Color {
     fn from(value: &wordle::Color) -> Self {
@@ -194,5 +195,78 @@ impl Widget for &wordle::Game {
             .bold()
             .centered()
             .render(message_area, buf);
+    }
+}
+
+impl Widget for &Stats {
+    fn render(self, area: Rect, buf: &mut prelude::Buffer)
+    where
+        Self: Sized,
+    {
+        let [general_area, chart_area] =
+            Layout::vertical([Constraint::Length(3), Constraint::Fill(1)])
+                .spacing(2)
+                .areas(area);
+
+        let [played_area, percent_area] =
+            Layout::horizontal([Constraint::Percentage(50); 2]).areas(general_area);
+
+        let played_block = Paragraph::new(format!("{}", self.attempted))
+            .bold()
+            .centered()
+            .block(Block::new().title_bottom(Line::from("Played").not_bold().centered()));
+
+        let win_percentage =
+            (self.won.iter().sum::<usize>() as f32 / self.attempted as f32 * 100.0).round();
+
+        let percent_block = Paragraph::new(format!("{win_percentage}"))
+            .bold()
+            .centered()
+            .block(Block::new().title_bottom(Line::from("Win %").not_bold().centered()));
+
+        played_block.render(played_area, buf);
+        percent_block.render(percent_area, buf);
+
+        let max = *self.won.iter().max().unwrap();
+        let max_indices = self
+            .won
+            .iter()
+            .enumerate()
+            .filter_map(|(i, c)| (*c == max).then_some(i))
+            .collect::<HashSet<_>>();
+
+        let mut bars: [Bar; 6] = array::from_fn(|_| Bar::default());
+
+        for (i, bar) in bars.iter_mut().enumerate() {
+            *bar = Bar::default()
+                .label(format!("{}", i + 1).into())
+                .value(self.won[i] as u64)
+                .style(if max_indices.contains(&i) {
+                    Style::new().green()
+                } else {
+                    Style::new().dark_gray()
+                })
+                .value_style(if max_indices.contains(&i) {
+                    Style::new().bold().white().on_green()
+                } else {
+                    Style::new().bold().white().on_dark_gray()
+                })
+        }
+
+        let chart = BarChart::default()
+            .direction(Direction::Horizontal)
+            .bar_width(1)
+            .bar_gap(0)
+            .label_style(Style::new().white())
+            .data(BarGroup::default().bars(&bars))
+            .max(max as u64);
+
+        let chart_block = Block::new()
+            .title(Line::from("Guess Distribution").bold().centered())
+            .padding(Padding::vertical(1));
+        let chart_block_area = chart_block.inner(chart_area);
+
+        chart_block.render(chart_area, buf);
+        chart.render(chart_block_area, buf);
     }
 }

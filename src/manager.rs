@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use chrono::{Duration, NaiveDate, Utc};
 
-use crate::{SaveData, wordle};
+use crate::{SaveData, Stats, wordle};
 
 const FIRST_WORDLE_DATE: NaiveDate = NaiveDate::from_ymd_opt(2021, 6, 19).unwrap();
 
@@ -30,6 +30,10 @@ impl GameManager {
             date: Utc::now().date_naive(),
             save_data,
         })
+    }
+
+    pub(crate) fn stats(&self) -> Stats {
+        self.save_data.stats()
     }
 
     pub(crate) fn save(&mut self) {

@@ -46,6 +46,10 @@ impl SaveData {
         Ok(())
     }
 
+    pub(crate) fn games(&self) -> impl Iterator<Item = &wordle::Game> {
+        self.map.values()
+    }
+
     pub(crate) fn save(&mut self, game: &wordle::Game) {
         self.map.insert(game.info.number, game.clone());
     }
