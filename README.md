@@ -3,7 +3,7 @@
 Small project to get accustomed with using the [Helix text editor](https://helix-editor.com/),
 and to have some fun with Rust!
 
-![Screenshot](./assets/screenshot.png)
+![Screenshot](./assets/screenshot1.png)
 
 ## Features:
 - [x] Game functionality
