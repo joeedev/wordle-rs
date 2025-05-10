@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use ratatui::{
     layout::{Constraint, Flex, Layout},
     prelude::{self, Color, Rect},
@@ -123,5 +125,71 @@ impl Widget for &Keyboard {
         self.rows.0.render(area1, buf);
         self.rows.1.render(area2, buf);
         self.rows.2.render(area3, buf);
+    }
+}
+
+impl Widget for &wordle::Game {
+    fn render(self, area: Rect, buf: &mut prelude::Buffer)
+    where
+        Self: Sized,
+    {
+        let layout = Layout::vertical([
+            Constraint::Length(2),
+            Constraint::Fill(1),
+            Constraint::Length(2),
+            Constraint::Length(3),
+        ])
+        .flex(Flex::Start);
+
+        let game_layout = Layout::horizontal([Constraint::Length(29)])
+            .flex(Flex::Center)
+            .spacing(2);
+
+        let keyboard_layout = Layout::horizontal([Constraint::Length(40)])
+            .flex(Flex::Center)
+            .spacing(2);
+
+        let [title_area, game_area, message_area, keyboard_area] = layout.areas(area);
+        let [game_area] = game_layout.areas(game_area);
+        let [keyboard_area] = keyboard_layout.areas(keyboard_area);
+
+        let grid_layout = Layout::vertical([Constraint::Length(3); 6])
+            .flex(Flex::Start)
+            .spacing(1);
+
+        for (area, row) in grid_layout
+            .areas::<6>(game_area)
+            .into_iter()
+            .zip(&self.grid)
+        {
+            row.render(area, buf);
+        }
+
+        Keyboard::from_rows(&self.grid).render(keyboard_area, buf);
+
+        Paragraph::new(format!("Wordle #{}", self.info.number))
+            .bold()
+            .centered()
+            .render(title_area, buf);
+
+        let message: Cow<str> = if self.has_finished() {
+            match self.won_in() {
+                Some(1) => "Genius".into(),
+                Some(2) => "Magnificent".into(),
+                Some(3) => "Impressive".into(),
+                Some(4) => "Splendid".into(),
+                Some(5) => "Great".into(),
+                Some(6) => "Phew".into(),
+                None => self.info.word.to_uppercase().into(),
+                _ => unreachable!(),
+            }
+        } else {
+            "".into()
+        };
+
+        Paragraph::new(message)
+            .bold()
+            .centered()
+            .render(message_area, buf);
     }
 }
