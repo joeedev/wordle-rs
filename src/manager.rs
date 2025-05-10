@@ -5,8 +5,9 @@ use chrono::{DateTime, Duration, Utc};
 use crate::{SaveData, wordle};
 
 pub(crate) struct GameManager {
+    latest_game_number: u32,
     game: wordle::Game,
-    date: DateTime<Utc>,
+    pub(crate) date: DateTime<Utc>,
     pub(crate) save_data: SaveData,
 }
 
@@ -20,6 +21,7 @@ impl GameManager {
         }
 
         Ok(Self {
+            latest_game_number: game.info.number,
             game,
             date: Utc::now(),
             save_data,
@@ -57,6 +59,15 @@ impl GameManager {
 
     pub(crate) async fn previous(&mut self) {
         self.offset_by(-1).await;
+    }
+
+    pub(crate) async fn first(&mut self) {
+        self.offset_by(-(self.game.info.number as i32)).await;
+    }
+
+    pub(crate) async fn last(&mut self) {
+        self.offset_by(self.latest_game_number as i32 - self.game.info.number as i32)
+            .await;
     }
 }
 

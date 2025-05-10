@@ -167,10 +167,13 @@ impl Widget for &wordle::Game {
 
         Keyboard::from_rows(&self.grid).render(keyboard_area, buf);
 
-        Paragraph::new(format!("Wordle #{}", self.info.number))
-            .bold()
-            .centered()
-            .render(title_area, buf);
+        Paragraph::new(format!(
+            "Wordle #{} - {}",
+            self.info.number, self.info.date_string
+        ))
+        .bold()
+        .centered()
+        .render(title_area, buf);
 
         let message: Cow<str> = if self.has_finished() {
             match self.won_in() {

@@ -63,10 +63,12 @@ impl Row {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(crate) struct GameInfo {
-    #[serde(rename = "days_since_launch")]
+    #[serde(default, rename = "days_since_launch")]
     pub(crate) number: u32,
     #[serde(rename = "solution")]
     pub(crate) word: String,
+    #[serde(rename = "print_date")]
+    pub(crate) date_string: String,
 }
 
 impl GameInfo {

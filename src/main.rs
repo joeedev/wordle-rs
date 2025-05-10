@@ -19,8 +19,12 @@ enum Message {
     Letter(char),
     Backspace,
     Submit,
+
     Next,
     Previous,
+    First,
+    Last,
+
     Quit,
 }
 
@@ -54,6 +58,12 @@ impl Model {
             Message::Previous => {
                 self.game.previous().await;
             }
+            Message::First => {
+                self.game.first().await;
+            }
+            Message::Last => {
+                self.game.last().await;
+            }
             Message::Quit => {
                 self.running_state = RunningState::Done;
             }
@@ -84,6 +94,12 @@ async fn main() {
             }
             Event::Key(e) if e.code.is_backspace() => Some(Message::Backspace),
             Event::Key(e) if e.code.is_enter() => Some(Message::Submit),
+            Event::Key(e) if e.code.is_left() && e.modifiers.contains(KeyModifiers::CONTROL) => {
+                Some(Message::First)
+            }
+            Event::Key(e) if e.code.is_right() && e.modifiers.contains(KeyModifiers::CONTROL) => {
+                Some(Message::Last)
+            }
             Event::Key(e) if e.code.is_left() => Some(Message::Previous),
             Event::Key(e) if e.code.is_right() => Some(Message::Next),
             Event::Key(e) => match e.code.as_char() {
