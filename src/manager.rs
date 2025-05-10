@@ -1,13 +1,18 @@
 use std::ops::{Deref, DerefMut};
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, NaiveDate, Utc};
 
 use crate::{SaveData, wordle};
 
+const FIRST_WORDLE_DATE: NaiveDate = NaiveDate::from_ymd_opt(2021, 6, 19).unwrap();
+
+fn date_to_wordle_number(date: NaiveDate) -> u32 {
+    (date - FIRST_WORDLE_DATE).num_days().try_into().unwrap()
+}
+
 pub(crate) struct GameManager {
-    latest_game_number: u32,
     game: wordle::Game,
-    pub(crate) date: DateTime<Utc>,
+    pub(crate) date: NaiveDate,
     pub(crate) save_data: SaveData,
 }
 
@@ -21,9 +26,8 @@ impl GameManager {
         }
 
         Ok(Self {
-            latest_game_number: game.info.number,
             game,
-            date: Utc::now(),
+            date: Utc::now().date_naive(),
             save_data,
         })
     }
@@ -32,18 +36,10 @@ impl GameManager {
         self.save_data.save(&self.game);
     }
 
-    async fn offset_by(&mut self, offset: i32) {
-        let new_date = self.date + Duration::days(offset as i64);
-        if new_date.date_naive() > Utc::now().date_naive() {
-            return;
-        }
+    async fn goto(&mut self, date: NaiveDate) {
+        self.date = date;
 
-        self.date = new_date;
-
-        if let Some(game) = self
-            .save_data
-            .load((self.game.info.number as i32 + offset) as u32)
-        {
+        if let Some(game) = self.save_data.load(date_to_wordle_number(date)) {
             game.clone_into(&mut self.game);
         } else if let Ok(game) = wordle::GameInfo::at(self.date)
             .await
@@ -51,6 +47,14 @@ impl GameManager {
         {
             game.clone_into(&mut self.game);
         }
+    }
+
+    async fn offset_by(&mut self, offset: i32) {
+        let new_date = self.date + Duration::days(offset as i64);
+        if new_date < FIRST_WORDLE_DATE || new_date > Utc::now().date_naive() {
+            return;
+        }
+        self.goto(new_date).await;
     }
 
     pub(crate) async fn next(&mut self) {
@@ -62,12 +66,11 @@ impl GameManager {
     }
 
     pub(crate) async fn first(&mut self) {
-        self.offset_by(-(self.game.info.number as i32)).await;
+        self.goto(FIRST_WORDLE_DATE).await;
     }
 
     pub(crate) async fn last(&mut self) {
-        self.offset_by(self.latest_game_number as i32 - self.game.info.number as i32)
-            .await;
+        self.goto(Utc::now().date_naive()).await;
     }
 }
 

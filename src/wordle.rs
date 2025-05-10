@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, PartialOrd)]
@@ -73,10 +73,10 @@ pub(crate) struct GameInfo {
 
 impl GameInfo {
     pub(crate) async fn today() -> anyhow::Result<Self> {
-        GameInfo::at(Utc::now()).await
+        GameInfo::at(Utc::now().date_naive()).await
     }
 
-    pub(crate) async fn at(date: DateTime<Utc>) -> anyhow::Result<Self> {
+    pub(crate) async fn at(date: NaiveDate) -> anyhow::Result<Self> {
         let date = date.format("%Y-%m-%d");
         let url = format!("https://www.nytimes.com/svc/wordle/v2/{date}.json");
         let res = reqwest::get(url).await?;
